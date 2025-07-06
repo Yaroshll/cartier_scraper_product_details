@@ -1,0 +1,18 @@
+{
+  "name": "cartier_scraper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "type": "module",
+  "dependencies": {
+    "csv-writer": "^1.6.0",
+    "playwright": "^1.53.2",
+    "xlsx": "^0.18.5"
+  }
+}
