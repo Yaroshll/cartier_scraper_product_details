@@ -6,10 +6,12 @@ export async function launchBrowser() {
     headless: false,
     channel: 'chrome',
     args: [
-      '--disable-gpu',
+     '--disable-gpu',
       '--disable-dev-shm-usage',
       '--disable-setuid-sandbox',
-      '--no-sandbox'
+      '--no-sandbox',
+      '--disable-http2',
+      '--ignore-certificate-errors'
     ],
     timeout: 12000
   });

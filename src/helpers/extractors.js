@@ -4,7 +4,7 @@ import { getDescription } from './description.js';
 import { SELECTORS } from './constants.js';
 
 export async function extractCartierProductData(page, url) {
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
+ await page.goto(url, { waitUntil: 'load' });
   await page.waitForLoadState('networkidle');
 
   const handle = formatHandleFromUrl(url);

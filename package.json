@@ -1,19 +1,16 @@
 {
   "name": "cartier_scraper",
   "version": "1.0.0",
+  "type": "module",
+  "description": "Cartier product detail scraper using Playwright",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-   
+    "start": "node src/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "type": "module",
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
-    "csv-writer": "^1.6.0",
-    "playwright": "^1.53.2",
+    "playwright": "^1.53.1",
     "xlsx": "^0.18.5"
   }
 }
