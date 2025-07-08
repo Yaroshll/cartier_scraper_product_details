@@ -2,22 +2,25 @@
 import { formatHandleFromUrl, extractSKU, calculatePrices } from './formatters.js';
 import { getDescription } from './description.js';
 import { SELECTORS } from './constants.js';
+import { gotoWithRetries } from './gotoWithRetries.js';
 
 export async function extractCartierProductData(page, url) {
+  await gotoWithRetries(page, url);
  await page.goto(url, { waitUntil: 'load' });
+   console.info("page load");
   await page.waitForLoadState('networkidle');
 
   const handle = formatHandleFromUrl(url);
+  console.info("handle Done");
   const sku = extractSKU(handle);
+  console.info("sku Done");
+ const title = await page.$eval('h1.pdp__name', el => el.innerText.trim());
 
-  const titlePart1 = await page.textContent(SELECTORS.LOGO_TITLE).catch(() => '');
-  const titlePart2 = await page.textContent(SELECTORS.TITLE).catch(() => '');
-  const title = `${titlePart1} , ${titlePart2}`.trim();
-
-  const breadcrumbs = await page.$$eval(
-    `${SELECTORS.BREADCRUMBS} li`,
-    lis => lis.map(li => li.textContent.trim()).filter((_, i) => i > 0).join(', ')
-  );
+  console.info("title Done");
+ // Breadcrumbs
+const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
+  lis.map(li => li.textContent.trim()).filter((_, i) => i > 0).join(', ')
+);
 
   const description = await getDescription(page);
 
