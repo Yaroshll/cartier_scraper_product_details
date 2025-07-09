@@ -25,8 +25,8 @@ export function extractSKU(handle) {
  * @param {number} cost
  * @returns {{variantPrice: number, compareAtPrice: number}}
  */
-export function calculatePrices(cost) {
-  const variantPrice = +(cost * 1.3).toFixed(2);
-  const compareAtPrice = +(variantPrice * 1.2).toFixed(2);
-  return { variantPrice, compareAtPrice };
-}
+// export function calculatePrices(cost) {
+//   const variantPrice = +(cost * 1.3).toFixed(2);
+//   const compareAtPrice = +(variantPrice * 1.2).toFixed(2);
+//   return { variantPrice, compareAtPrice };
+// }
