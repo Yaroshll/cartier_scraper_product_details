@@ -8,7 +8,7 @@ export async function extractCartierProductData(page, url) {
   await gotoWithRetries(page, url);
  //await page.goto(url, { waitUntil: 'load' });
    console.info("page loaded, waiting for network idle...");
-  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(3000);
 
   const handle = formatHandleFromUrl(url);
   console.info("handle Done");
