@@ -6,36 +6,40 @@ import { gotoWithRetries } from './gotoWithRetries.js';
 
 export async function extractCartierProductData(page, url) {
   await gotoWithRetries(page, url);
- //await page.goto(url, { waitUntil: 'load' });
-   console.info("page loaded, waiting for network idle...");
+  console.info("✅ Page loaded, waiting 3s for stability...");
   await page.waitForTimeout(3000);
 
   const handle = formatHandleFromUrl(url);
-  console.info("handle Done");
   const sku = extractSKU(handle);
-  console.info("sku Done");
- const title = await page.$eval('h1.pdp__name', el => el.innerText.trim());
 
-  console.info("title Done");
- // Breadcrumbs
-const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
-  lis.map(li => li.textContent.trim()).filter((_, i) => i > 0).join(',')
-);
+  const title = await page.$eval(SELECTORS.TITLE, el => el.innerText.trim());
+
+  const breadcrumbs = await page.$$eval(
+    'div.pdp-main__breadcrumbs ol li',
+    lis => lis.map(li => li.textContent.trim()).filter((_, i) => i > 0).join(',')
+  );
+
+  const cleanedTags = breadcrumbs
+    .split(',')
+    .map(tag => tag.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join(',');
 
   const description = await getDescription(page);
-  // PRICE (from content attribute)
-   // Extract price
-    const price = await page.$eval(SELECTORS.PRICE, (el) => {
-      const priceText = el.textContent.replace(/[^\d,]/g, "").replace(",", ".");
-      return parseFloat(priceText);
-    });
-  // const priceText = await page.textContent(SELECTORS.PRICE).catch(() => '');
-  // const price = parseFloat(priceText.replace('AED', '').trim().replace(/,/g, ''));
+
+  // Price via content attribute
+  const priceContent = await page.$eval(SELECTORS.PRICE, el => el.getAttribute('content')).catch(() => null);
+  const price = parseFloat(priceContent);
+
+  if (!price || isNaN(price)) throw new Error(`❌ Invalid price found: ${priceContent}`);
+
   const { variantPrice, compareAtPrice } = calculatePrices(price);
+
   const imageHandles = await page.$$eval(
-    'ul[data-product-component="image-gallery"] li img',
-    imgs => imgs.map(img => img.src)
+    SELECTORS.IMAGE_GALLERY,
+    imgs => imgs.map(img => img.src).filter(src => !src.includes('cartier.com/en-ae'))
   );
+
   const mainImage = imageHandles[0] || '';
   const extraImages = imageHandles.slice(1).map(src => ({ Handle: handle, 'Image Src': src }));
 
@@ -45,12 +49,11 @@ const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
     "Body (HTML)": description,
     Vendor: "cartier",
     Type: "Jewellery",
-    Tags: breadcrumbs,
+    Tags: cleanedTags,
     "Variant SKU": sku,
     "Variant Price": variantPrice,
     "Cost per item": price,
     "Image Src": mainImage,
-    //"Variant Image": mainImage,
     "Variant Fulfillment Service": "manual",
     "Variant Inventory Policy": "deny",
     "Variant Inventory Tracker": "shopify",
