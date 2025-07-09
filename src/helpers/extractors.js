@@ -27,13 +27,19 @@ export async function extractCartierProductData(page, url) {
   const description = await getDescription(page);
 
    // Extract price
-    const priceText = await page.$eval(SELECTORS.PRICE, el => el.innerText.trim())
-      .catch(() => '0');
-    const price = parseFloat(priceText.replace(/[^\d.]/g, ''));
+const priceText = await page.$eval(SELECTORS.PRICE, el => {
+  // Get text and remove AED specifically
+  const text = el.innerText.replace('AED', '').trim();
+  // Remove any remaining non-numeric characters except decimal point
+  return text.replace(/[^\d.]/g, '');
+}).catch(() => '0');
 
-    // Calculate prices
-    const { variantPrice, compareAtPrice } = calculatePrices(price);
+// Convert to number with exactly 2 decimal places
+const price = parseFloat(priceText);
+const roundedPrice = isNaN(price) ? 0 : parseFloat(price.toFixed(2));
 
+// Calculate prices
+const { variantPrice, compareAtPrice } = calculatePrices(roundedPrice);
   // Extract product images
   const imageHandles = await page.$$eval(
     'ul[data-product-component="image-gallery"] li button img',
