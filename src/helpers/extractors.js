@@ -1,12 +1,13 @@
 // helpers/extractors.js
-import { formatHandleFromUrl, extractSKU} from './formatters.js';
+
+import { formatHandleFromUrl, extractSKU, calculatePrices } from './formatters.js';
 import { getDescription } from './description.js';
 import { SELECTORS } from './constants.js';
 import { gotoWithRetries } from './gotoWithRetries.js';
 
 export async function extractCartierProductData(page, url) {
   await gotoWithRetries(page, url);
-  console.info("✅ Page loaded, waiting 3s for stability...");
+  console.info("✅ Page loaded, waiting for stability...");
   await page.waitForTimeout(3000);
 
   const handle = formatHandleFromUrl(url);
@@ -14,36 +15,38 @@ export async function extractCartierProductData(page, url) {
 
   const title = await page.$eval(SELECTORS.TITLE, el => el.innerText.trim());
 
-  const breadcrumbs = await page.$$eval(
-    'div.pdp-main__breadcrumbs ol li',
-    lis => lis.map(li => li.textContent.trim()).filter((_, i) => i > 0).join(',')
+  // Clean breadcrumb tags and remove empty ones
+  const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
+    lis
+      .map(li => li.textContent.trim())
+      .filter(text => text && !/^\/?$/.test(text))
+      .slice(1) // skip "Home"
+      .join(',')
   );
-
-  const cleanedTags = breadcrumbs
-    .split(',')
-    .map(tag => tag.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
-    .join(',');
 
   const description = await getDescription(page);
 
- const price = await page.$eval(SELECTORS.PRICE, el => {
-  const contentAttr = el.getAttribute('content');
-  if (contentAttr) {
-    return parseFloat(contentAttr);
+  // ✅ Extract price from text (strip AED and commas)
+  const priceText = await page.$eval(SELECTORS.PRICE, el => el.innerText.trim());
+  const price = parseFloat(priceText.replace('AED', '').replace(',', '').trim());
+
+  if (!price) {
+    throw new Error(`❌ Invalid price found: ${priceText}`);
   }
 
-  // Fallback: try parsing inner text (e.g., "AED 23,400")
-  const text = el.innerText.replace(/[^\d.,]/g, '').replace(',', '');
-  return parseFloat(text);
-});
+  const { variantPrice, compareAtPrice } = calculatePrices(price);
+
+  // Extract product images
   const imageHandles = await page.$$eval(
-    SELECTORS.IMAGE_GALLERY,
-    imgs => imgs.map(img => img.src).filter(src => !src.includes('cartier.com/en-ae'))
+    'ul[data-product-component="image-gallery"] li img',
+    imgs => imgs.map(img => img.src)
   );
 
   const mainImage = imageHandles[0] || '';
-  const extraImages = imageHandles.slice(1).map(src => ({ Handle: handle, 'Image Src': src }));
+  const extraImages = imageHandles.slice(1).map(src => ({
+    Handle: handle,
+    'Image Src': src
+  }));
 
   const productRow = {
     Handle: handle,
@@ -51,7 +54,7 @@ export async function extractCartierProductData(page, url) {
     "Body (HTML)": description,
     Vendor: "cartier",
     Type: "Jewellery",
-    Tags: cleanedTags,
+    Tags: breadcrumbs,
     "Variant SKU": sku,
     "Variant Price": variantPrice,
     "Cost per item": price,
