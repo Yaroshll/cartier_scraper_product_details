@@ -1,5 +1,5 @@
 // helpers/extractors.js
-import { formatHandleFromUrl, extractSKU, calculatePrices } from './formatters.js';
+import { formatHandleFromUrl, extractSKU} from './formatters.js';
 import { getDescription } from './description.js';
 import { SELECTORS } from './constants.js';
 import { gotoWithRetries } from './gotoWithRetries.js';
