@@ -26,15 +26,37 @@ export async function extractCartierProductData(page, url) {
 
   const description = await getDescription(page);
 
-  // ✅ Extract price from text (strip AED and commas)
-  const priceText = await page.$eval(SELECTORS.PRICE, el => el.innerText.trim());
-  const price = parseFloat(priceText.replace('AED', '').replace(',', '').trim());
 
-  if (!price) {
-    throw new Error(`❌ Invalid price found: ${priceText}`);
+  // ✅ Improved price extraction with multiple fallbacks
+  let priceText = '';
+  try {
+    // Try primary selector first
+    priceText = await page.$eval(SELECTORS.PRICE, el => el.innerText.trim());
+    
+    // If empty, try alternative selectors
+    if (!priceText || priceText === 'None') {
+      priceText = await page.$eval('.prices__value', el => el.innerText.trim())
+        .catch(() => '');
+    }
+    
+    // If still empty, check for price in JSON-LD
+    if (!priceText || priceText === 'None') {
+      const jsonLd = await page.$eval('script[type="application/ld+json"]', el => el.textContent);
+      const productData = JSON.parse(jsonLd);
+      priceText = productData.offers?.price || '';
+    }
+  } catch (error) {
+    console.warn('Price extraction failed:', error);
   }
 
-  const { variantPrice, compareAtPrice } = calculatePrices(price);
+  // Clean and validate price
+  const priceMatch = priceText.match(/(\d[\d,.]*)/);
+  const price = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : null;
+
+  if (!price || isNaN(price)) {
+    console.error('Could not extract price from:', priceText);
+    throw new Error(`❌ Invalid price found: ${priceText}`);
+  };
 
   // Extract product images
   const imageHandles = await page.$$eval(
