@@ -24,9 +24,15 @@ const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
 
   const description = await getDescription(page);
 
-  const priceText = await page.textContent(SELECTORS.PRICE);
-  const cost = parseFloat(priceText.replace('AED', '').trim());
-  const { variantPrice, compareAtPrice } = calculatePrices(cost);
+  // Fetch clean price from content attribute
+const priceAttr = await page.getAttribute(SELECTORS.PRICE, 'content');
+const cost = parseFloat(priceAttr);
+
+// Defensive fallback (optional)
+if (isNaN(cost)) throw new Error(`❌ Invalid price found: ${priceAttr}`);
+
+// Calculate Shopify prices
+const { variantPrice, compareAtPrice } = calculatePrices(cost);
 
   const imageHandles = await page.$$eval(
     'ul[data-product-component="image-gallery"] li img',
