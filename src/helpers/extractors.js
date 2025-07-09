@@ -23,22 +23,27 @@ const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
 );
 
   const description = await getDescription(page);
+  // PRICE (from content attribute)
+  let cost = null;
+  try {
+    const priceElement = await page.$(SELECTORS.PRICE);
+    if (!priceElement) throw new Error('Price element not found');
 
-  // Fetch clean price from content attribute
-const priceAttr = await page.getAttribute(SELECTORS.PRICE, 'content');
-const cost = parseFloat(priceAttr);
+    const priceAttr = await priceElement.getAttribute('content');
+    if (!priceAttr) throw new Error("Price 'content' attribute missing");
 
-// Defensive fallback (optional)
-if (isNaN(cost)) throw new Error(`❌ Invalid price found: ${priceAttr}`);
+    cost = parseFloat(priceAttr);
+    if (isNaN(cost)) throw new Error('Parsed price is NaN');
+  } catch (err) {
+    throw new Error(`❌ Invalid price found: ${err.message}`);
+  }
 
-// Calculate Shopify prices
-const { variantPrice, compareAtPrice } = calculatePrices(cost);
-
+  const { variantPrice, compareAtPrice } = calculatePrices(cost);
   const imageHandles = await page.$$eval(
     'ul[data-product-component="image-gallery"] li img',
     imgs => imgs.map(img => img.src)
   );
-  const mainImage = imageHandles[0] || '';
+  //const mainImage = imageHandles[0] || '';
   const extraImages = imageHandles.slice(1).map(src => ({ Handle: handle, 'Image Src': src }));
 
   const productRow = {
@@ -52,7 +57,7 @@ const { variantPrice, compareAtPrice } = calculatePrices(cost);
     "Variant Price": variantPrice,
     "Cost per item": cost,
     "Image Src": mainImage,
-    "Variant Image": mainImage,
+    //"Variant Image": mainImage,
     "Variant Fulfillment Service": "manual",
     "Variant Inventory Policy": "deny",
     "Variant Inventory Tracker": "shopify",
