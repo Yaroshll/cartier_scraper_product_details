@@ -16,7 +16,7 @@ export async function extractCartierProductData(page, url) {
   const title = await page.$eval(SELECTORS.TITLE, el => el.innerText.trim());
 
   // Clean breadcrumb tags and remove empty ones
-  const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
+  const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li a.breadcrumbs__anchor.link--secondary', lis =>
     lis
       .map(li => li.textContent.trim())
       .filter(text => text && !/^\/?$/.test(text))
@@ -36,7 +36,7 @@ export async function extractCartierProductData(page, url) {
 
   // Extract product images
   const imageHandles = await page.$$eval(
-    'ul[data-product-component="image-gallery"] li img',
+    'ul[data-product-component="image-gallery"] li button img',
     imgs => imgs.map(img => img.src)
   );
 
