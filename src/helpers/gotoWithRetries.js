@@ -17,7 +17,7 @@ export async function gotoWithRetries(page, url, retries = 2) {
       });
 
       // Wait for Cartier-specific selector to confirm successful load
-      await page.waitForSelector('h1.pdp__name', { timeout: 20000 });
+      await page.waitForSelector('span.value', { timeout: 20000 });
 
       return; // Success
     } catch (error) {
