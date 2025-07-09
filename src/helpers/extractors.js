@@ -32,7 +32,7 @@ const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
     'ul[data-product-component="image-gallery"] li img',
     imgs => imgs.map(img => img.src)
   );
-  //const mainImage = imageHandles[0] || '';
+  const mainImage = imageHandles[0] || '';
   const extraImages = imageHandles.slice(1).map(src => ({ Handle: handle, 'Image Src': src }));
 
   const productRow = {
