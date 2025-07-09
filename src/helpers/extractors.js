@@ -40,7 +40,7 @@ export async function extractCartierProductData(page, url) {
 
     // Extract images (skip duplicates)
     const imageUrls = await page.$$eval(SELECTORS.IMAGE_GALLERY_IMAGES, imgs => 
-      [...new Set(imgs.map(img => img.src).filter(src => src && !src.includes('placeholder'))]
+      [...new Set(imgs.map(img => img.src).filter(src => src && !src.includes('placeholder')))]
     ).catch(() => []);
 
     return {
