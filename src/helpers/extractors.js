@@ -27,14 +27,16 @@ export async function extractCartierProductData(page, url) {
 
   const description = await getDescription(page);
 
-  // Price via content attribute
-  const priceContent = await page.$eval(SELECTORS.PRICE, el => el.getAttribute('content')).catch(() => null);
-  const price = parseFloat(priceContent);
+ const price = await page.$eval(SELECTORS.PRICE, el => {
+  const contentAttr = el.getAttribute('content');
+  if (contentAttr) {
+    return parseFloat(contentAttr);
+  }
 
-  if (!price || isNaN(price)) throw new Error(`❌ Invalid price found: ${priceContent}`);
-
-  const { variantPrice, compareAtPrice } = calculatePrices(price);
-
+  // Fallback: try parsing inner text (e.g., "AED 23,400")
+  const text = el.innerText.replace(/[^\d.,]/g, '').replace(',', '');
+  return parseFloat(text);
+});
   const imageHandles = await page.$$eval(
     SELECTORS.IMAGE_GALLERY,
     imgs => imgs.map(img => img.src).filter(src => !src.includes('cartier.com/en-ae'))
