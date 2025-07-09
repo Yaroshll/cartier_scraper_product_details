@@ -25,8 +25,12 @@ const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
   const description = await getDescription(page);
   // PRICE (from content attribute)
    // Extract price
-  const priceText = await page.textContent(SELECTORS.PRICE).catch(() => '');
-  const price = parseFloat(priceText.replace('AED', '').trim().replace(/,/g, ''));
+    const price = await page.$eval(SELECTORS.PRICE, (el) => {
+      const priceText = el.textContent.replace(/[^\d,]/g, "").replace(",", ".");
+      return parseFloat(priceText);
+    });
+  // const priceText = await page.textContent(SELECTORS.PRICE).catch(() => '');
+  // const price = parseFloat(priceText.replace('AED', '').trim().replace(/,/g, ''));
   const { variantPrice, compareAtPrice } = calculatePrices(price);
   const imageHandles = await page.$$eval(
     'ul[data-product-component="image-gallery"] li img',
