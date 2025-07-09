@@ -19,26 +19,15 @@ export async function extractCartierProductData(page, url) {
   console.info("title Done");
  // Breadcrumbs
 const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
-  lis.map(li => li.textContent.trim()).filter((_, i) => i > 0).join(', ')
+  lis.map(li => li.textContent.trim()).filter((_, i) => i > 0).join(',')
 );
 
   const description = await getDescription(page);
   // PRICE (from content attribute)
-  let cost = null;
-  try {
-    const priceElement = await page.$(SELECTORS.PRICE);
-    if (!priceElement) throw new Error('Price element not found');
-
-    const priceAttr = await priceElement.getAttribute('content');
-    if (!priceAttr) throw new Error("Price 'content' attribute missing");
-
-    cost = parseFloat(priceAttr);
-    if (isNaN(cost)) throw new Error('Parsed price is NaN');
-  } catch (err) {
-    throw new Error(`❌ Invalid price found: ${err.message}`);
-  }
-
-  const { variantPrice, compareAtPrice } = calculatePrices(cost);
+   // Extract price
+  const priceText = await page.textContent(SELECTORS.PRICE).catch(() => '');
+  const price = parseFloat(priceText.replace('AED', '').trim().replace(/,/g, ''));
+  const { variantPrice, compareAtPrice } = calculatePrices(price);
   const imageHandles = await page.$$eval(
     'ul[data-product-component="image-gallery"] li img',
     imgs => imgs.map(img => img.src)
@@ -55,7 +44,7 @@ const breadcrumbs = await page.$$eval('div.pdp-main__breadcrumbs ol li', lis =>
     Tags: breadcrumbs,
     "Variant SKU": sku,
     "Variant Price": variantPrice,
-    "Cost per item": cost,
+    "Cost per item": price,
     "Image Src": mainImage,
     //"Variant Image": mainImage,
     "Variant Fulfillment Service": "manual",
