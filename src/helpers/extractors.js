@@ -27,8 +27,18 @@ export async function extractCartierProductData(page, url) {
 
     const description = await getDescription(page);
 
-    // Robust price extraction with fallbacks
-    const price = await extractPrice(page);
+    // Enhanced price extraction with multiple fallbacks
+    const price = await extractPrice(page).catch(async (error) => {
+      console.error('Price extraction failed:', error);
+      // Final fallback - check entire page content
+      const pageContent = await page.content();
+      const priceMatch = pageContent.match(/AED\s*([\d,]+\.?\d*)/i);
+      if (priceMatch) {
+        return parseFloat(priceMatch[1].replace(/,/g, ''));
+      }
+      throw new Error('Could not extract price from any source');
+    });
+
     const { variantPrice, compareAtPrice } = calculatePrices(price);
 
     // Image extraction
@@ -71,41 +81,44 @@ export async function extractCartierProductData(page, url) {
 }
 
 async function extractPrice(page) {
+  // Try multiple price extraction methods
   const extractionMethods = [
-    // Method 1: Primary selector with AED removal
+    // Method 1: Primary selector
     async () => {
-      const text = await page.$eval(SELECTORS.PRICE, el => {
-        return el.innerText.replace(/AED|[^\d.]/g, '').trim();
-      });
-      return parseFloat(text) || 0;
+      const priceText = await page.$eval(SELECTORS.PRICE, el => el.innerText.trim());
+      const priceValue = priceText.replace(/AED|,/gi, '').trim();
+      return parseFloat(priceValue);
     },
     
-    // Method 2: Alternative price element
+    // Method 2: Alternative selectors
     async () => {
-      const text = await page.$eval('.price-value', el => {
-        return el.innerText.replace(/[^\d.]/g, '');
-      });
-      return parseFloat(text) || 0;
+      const priceText = await page.$eval('.prices__value, [data-test="price-value"]', el => el.innerText.trim());
+      return parseFloat(priceText.replace(/[^\d.]/g, ''));
     },
     
-    // Method 3: Meta tag fallback
+    // Method 3: JSON-LD data
     async () => {
-      const price = await page.$eval('meta[property="product:price:amount"]', el => 
-        parseFloat(el.content)
-      );
-      return price || 0;
+      const jsonLd = await page.$eval('script[type="application/ld+json"]', el => el.textContent);
+      const productData = JSON.parse(jsonLd);
+      return productData.offers?.price;
+    },
+    
+    // Method 4: Meta tags
+    async () => {
+      const metaPrice = await page.$eval('meta[property="product:price:amount"]', el => el.content);
+      return parseFloat(metaPrice);
     }
   ];
 
   for (const method of extractionMethods) {
     try {
       const price = await method();
-      if (price > 0) return price;
+      if (price && !isNaN(price)) {
+        return price;
+      }
     } catch (error) {
       continue;
     }
   }
-  
-  console.warn('All price extraction methods failed, defaulting to 0');
-  return 0;
+  throw new Error('All price extraction methods failed');
 }
