@@ -1,10 +1,8 @@
 // helpers/formatters.js
 
 export function formatHandleFromUrl(url) {
-  const cleanUrl = url.split('?')[0]; // Remove query params
-  const parts = cleanUrl.split('/');
-  const lastPart = parts[parts.length - 1].replace('.html', '');
-  return lastPart.replace(/-/g, '_');
+  const part = url.split('/').pop().replace('.html', '');
+  return part.replace(/-/g, '_');
 }
 
 export function extractSKU(handle) {
@@ -13,7 +11,7 @@ export function extractSKU(handle) {
 }
 
 export function calculatePrices(cost) {
-  const variantPrice = parseFloat((cost * 1.3).toFixed(2));
-  const compareAtPrice = parseFloat((variantPrice * 1.2).toFixed(2));
+  const variantPrice = +(cost * 1.3).toFixed(2);
+  const compareAtPrice = +(variantPrice * 1.2).toFixed(2);
   return { variantPrice, compareAtPrice };
 }
