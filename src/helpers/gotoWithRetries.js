@@ -9,15 +9,17 @@
 export async function gotoWithRetries(page, url, retries = 2) {
   for (let i = 0; i <= retries; i++) {
     try {
-      console.log(`🌐 Attempting to load: ${url} (try ${i + 1}/${retries + 1})`);
+      console.log(
+        `🌐 Attempting to load: ${url} (try ${i + 1}/${retries + 1})`
+      );
 
       await page.goto(url, {
-        waitUntil: 'domcontentloaded',
+        waitUntil: "domcontentloaded",
         timeout: 60000,
       });
 
       // Wait for Cartier-specific selector to confirm successful load
-      await page.waitForSelector('span.value', { timeout: 20000 });
+      await page.waitForSelector("span.value", { timeout: 20000 });
 
       return; // Success
     } catch (error) {

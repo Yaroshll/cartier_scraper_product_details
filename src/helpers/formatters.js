@@ -1,12 +1,12 @@
 // helpers/formatters.js
 
 export function formatHandleFromUrl(url) {
-  const part = url.split('/').pop().replace('.html', '');
-  return part.replace(/-/g, '_');
+  const part = url.split("/").pop().replace(".html", "");
+  return part.replace(/-/g, "_");
 }
 
 export function extractSKU(handle) {
-  const parts = handle.split('_');
+  const parts = handle.split("_");
   return parts[parts.length - 1];
 }
 
