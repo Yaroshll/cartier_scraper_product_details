@@ -6,8 +6,8 @@ import { gotoWithRetries } from './gotoWithRetries.js';
 
 export async function extractCartierProductData(page, url) {
   await gotoWithRetries(page, url);
- await page.goto(url, { waitUntil: 'load' });
-   console.info("page load");
+ //await page.goto(url, { waitUntil: 'load' });
+   console.info("page loaded, waiting for network idle...");
   await page.waitForLoadState('networkidle');
 
   const handle = formatHandleFromUrl(url);
