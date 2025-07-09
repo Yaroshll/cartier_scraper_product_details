@@ -1,4 +1,7 @@
-let description = '';
+import { SELECTORS } from './constants.js';
+
+export async function getDescription(page) {
+ let description = '';
 try {
   const moreBtn = await page.$('button.pdp-main__description-more');
   if (moreBtn) {
@@ -20,6 +23,8 @@ try {
 
   // Combine both
   description = `${fullDescription}\n\n${specText}`;
+  return description;
 } catch (err) {
   console.warn('⚠️ Description extraction failed:', err.message);
+}
 }
